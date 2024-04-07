@@ -26,7 +26,24 @@ async def convert_number(number: Annotated[int | str, Body()]) -> ConverterRespo
         "roman": "X"
     }
     """
+    result = None
+    try:
+        result = dict(
+            arabic=int(number),
+            roman=convert_arabic_to_roman(number=int(number))
+        )
 
-    converter_response = ConverterResponse()
+    except ValueError:
+        result = dict(
+            arabic=convert_roman_to_arabic(number=number),
+            roman=number
+        )
+    if result["arabic"] == "не поддерживается" or result["roman"] == "не поддерживается":
+        result = dict(
+            arabic=-1,
+            roman="не поддерживается"
+        )
+
+    converter_response = ConverterResponse(**result)
 
     return converter_response
