@@ -17,8 +17,23 @@ router = APIRouter(tags=["Стажировка"])
 """
 @router.post("/find_in_different_registers", description="Задание_1. Удаление дублей")
 async def find_in_different_registers(words: list[str]) -> list[str]:
-    """Описание."""
-
+    """
+    Создаем 2 списка - один под результат, другой используется для слов к удалению
+    Заходим в цикл, рассчитанный на количество элементов в исходном списке
+    Функцией pop берем очередной элемент и проверяем:
+        1.1 Встречается ли точно такой же элемент среди оставшихся элементов
+        1.2 Находится ли элемент в списке к пропуску
+        2. Находится ли элемент в результирующем списке
+    Если элемент не был обнаружен в списке к пропуску и еще не находится в результирующем списке,
+    добавляем его к выводу
+    """
     result = []
-
+    words_to_skip = []
+    for _ in range(len(words)):
+        elem = words.pop()
+        if elem in words or elem.lower() in words_to_skip:
+            words_to_skip.append(elem.lower())
+            continue
+        elif elem.lower() not in result:
+            result.append(elem.lower())
     return result
