@@ -1,6 +1,9 @@
 import glob
 import os
 from random import randint
+import shutil
+from typing import Any, Union
+import zipfile
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
@@ -16,7 +19,7 @@ b.	Добавить архивирование к post запросу, то ес
 с*.Добавить аннотации типов.
 """
 @router.post("/upload_file", description="Задание_5. API для хранения файлов")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...)) -> int:
     """Описание."""
     directory = os.path.dirname(__file__) + "/../files/"
     file_id = None
@@ -28,14 +31,21 @@ async def upload_file(file: UploadFile = File(...)):
             break
 
     full_path = f"{directory}{file_id}_{file.filename}"
-    with open(full_path, "wb") as f:
-        f.write(await file.read())
+    
+    with open(file.filename, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    zip_filename = f"{full_path}.zip"
+    with zipfile.ZipFile(zip_filename, "w") as zipf:
+        zipf.write(file.filename, compress_type=8, compresslevel=2)
+
+    os.remove(file.filename)
 
     return file_id
 
 
 @router.get("/download_file/{file_id}", description="Задание_5. API для хранения файлов")
-async def download_file(file_id: int):
+async def download_file(file_id: int) -> Any:
     """Описание."""
 
     directory = os.path.dirname(__file__) + "/../files/"
