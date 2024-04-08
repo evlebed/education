@@ -1,4 +1,8 @@
-from fastapi import APIRouter
+import glob
+import os
+from random import randint
+from fastapi import APIRouter, File, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 
 
 router = APIRouter(tags=["API для хранения файлов"])
@@ -12,10 +16,20 @@ b.	Добавить архивирование к post запросу, то ес
 с*.Добавить аннотации типов.
 """
 @router.post("/upload_file", description="Задание_5. API для хранения файлов")
-async def upload_file(file):
+async def upload_file(file: UploadFile = File(...)):
     """Описание."""
+    directory = os.path.dirname(__file__) + "/../files/"
+    file_id = None
+    while True:
+        file_id: int = randint(1,1000000)
+        pattern = os.path.join(directory, f"{file_id}_" + "*")
+        matching_files = glob.glob(pattern)
+        if len(matching_files) == 0:
+            break
 
-    file_id: int
+    full_path = f"{directory}{file_id}_{file.filename}"
+    with open(full_path, "wb") as f:
+        f.write(await file.read())
 
     return file_id
 
@@ -24,6 +38,11 @@ async def upload_file(file):
 async def download_file(file_id: int):
     """Описание."""
 
-    file = None
+    directory = os.path.dirname(__file__) + "/../files/"
 
-    return file
+    pattern = os.path.join(directory, f"{file_id}_" + "*")
+    matching_files = glob.glob(pattern)
+    if len(matching_files) != 0:
+        return FileResponse(matching_files[0], filename=os.path.basename(matching_files[0]) ,media_type='application/octet-stream')
+
+    return JSONResponse(content={"error": "File not found"}, status_code=404)
