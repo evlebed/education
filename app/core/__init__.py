@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from io import StringIO
 
+import pandas as pd
+
 
 def convert_arabic_to_roman(number: int) -> str:
     if number <= 0 or number > 3999:
@@ -41,8 +43,23 @@ def convert_roman_to_arabic(number: str) -> int:
     return arabic
 
 
-def average_age_by_position(file):
-    pass
+def average_age_by_position(file: str):
+    try:
+        df = pd.read_csv(file)
+    except Exception as e:
+        return {"error": f"Ошибка при чтении CSV файла: {e}"}
+
+    columns_names = ["Имя", "Возраст", "Должность"]
+    for col in columns_names: 
+        if col not in df.columns or len(df.columns) != len(columns_names):
+            return {"error": f"Файл должен содержать следующие колонки: {columns_names}"}
+
+    try:
+        df['Возраст'] = pd.to_numeric(df['Возраст'])
+        avg_age_by_position = df.groupby('Должность')['Возраст'].mean().to_dict()
+        return avg_age_by_position
+    except Exception as e:
+        return {"error": f"Ошибка при вычислении среднего возраста: {e}"}
 
 
 """
