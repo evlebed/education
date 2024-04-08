@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
@@ -41,11 +42,12 @@ async def get_average_age_by_position(file: UploadFile = File(...)):
     """
     В функции average_age_by_position реализована проверка корректности чтения файла
     """
-    file_path = f"/tmp/{file.filename}"
-    with open(file_path, "wb") as f:
+    file_path = f"/../files/{file.filename}"
+    full_path = os.path.dirname(__file__) + file_path
+    with open(full_path, "wb") as f:
         f.write(await file.read())
     
-    result = average_age_by_position(file=file_path)
+    result = average_age_by_position(file=full_path)
     if result.get("error"):
         return JSONResponse(content=result, status_code=400)
 
