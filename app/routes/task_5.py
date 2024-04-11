@@ -7,6 +7,8 @@ import zipfile
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
+from app.core import generate_unique_id
+
 
 router = APIRouter(tags=["API для хранения файлов"])
 
@@ -22,13 +24,7 @@ b.	Добавить архивирование к post запросу, то ес
 async def upload_file(file: UploadFile = File(...)) -> int:
     """Описание."""
     directory = os.path.dirname(__file__) + "/../files/"
-    file_id = None
-    while True:
-        file_id: int = randint(1,1000000)
-        pattern = os.path.join(directory, f"{file_id}_" + "*")
-        matching_files = glob.glob(pattern)
-        if len(matching_files) == 0:
-            break
+    file_id = generate_unique_id(directory)
 
     full_path = f"{directory}{file_id}_{file.filename}"
     

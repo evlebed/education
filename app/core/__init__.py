@@ -1,6 +1,12 @@
+import glob
+import json
+import csv
+import os
+from random import randint
+import yaml
+
 from abc import ABC, abstractmethod
 from io import StringIO
-
 import pandas as pd
 
 
@@ -82,31 +88,38 @@ class BaseWriter(ABC):
         :param data: полученные данные
         :return: Объект StringIO с данными из data
         """
-        pass
+        ...
 
 
 class JSONWriter(BaseWriter):
     """Потомок BaseWriter с переопределением метода write для генерации файла в json формате"""
 
-    """Ваша реализация"""
+    def write(self, data: list[list[int, str, float]]) -> StringIO:
+        output = StringIO()
+        json.dump(data, output)
+        output.seek(0)
+        return output
 
-    pass
 
-
-class CSVWriter:
+class CSVWriter(BaseWriter):
     """Потомок BaseWriter с переопределением метода write для генерации файла в csv формате"""
 
-    """Ваша реализация"""
+    def write(self, data: list[list[int, str, float]]) -> StringIO:
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerows(data)
+        output.seek(0)
+        return output
 
-    pass
 
-
-class YAMLWriter:
+class YAMLWriter(BaseWriter):
     """Потомок BaseWriter с переопределением метода write для генерации файла в yaml формате"""
 
-    """Ваша реализация"""
-
-    pass
+    def write(self, data: list[list[int, str, float]]) -> StringIO:
+        output = StringIO()
+        yaml.dump(data, output)
+        output.seek(0)
+        return output
 
 
 class DataGenerator:
@@ -114,22 +127,49 @@ class DataGenerator:
         self.data: list[list[int, str, float]] = data
         self.file_id = None
 
-    def generate(self, matrix_size) -> None:
+    def generate(self, matrix_size: int) -> None:
         """Генерирует матрицу данных заданного размера."""
-
         data: list[list[int, str, float]] = []
-        """Ваша реализация"""
-
+        for i in range(matrix_size):
+            row = [
+                i + 1,
+                f"row_{i + 1}",
+                float(i + 0.1)
+            ]
+            data.append(row)
         self.data = data
 
-    def to_file(self, path: str, writer) -> None:
+    def to_file(self, path: str, writer: BaseWriter) -> None:
         """
-        Метод для записи в файл данных полученных после генерации.
-        Если данных нет, то вызывается кастомный Exception.
-        :param path: Путь куда требуется сохранить файл
-        :param writer: Одна из реализаций классов потомков от BaseWriter
+        Метод для записи в файл данных после генерации.
+        Если данных нет, вызывается исключение.
+        :param path: путь куда сохранить файл
+        :param writer: экземпляр класса-писателя (например, JSONWriter, CSVWriter, YAMLWriter)
         """
+        if self.data is None:
+            raise ValueError("Данные не были сгенерированы.")
 
-        """Ваша реализация"""
+        output_data = writer.write(self.data)
+        file_type = None
+        self.file_id = generate_unique_id(directory=path)
+        if isinstance(writer, JSONWriter):
+            file_type = ".json"
+        elif isinstance(writer, CSVWriter):
+            file_type = ".csv"
+        elif isinstance(writer, YAMLWriter):
+            file_type = ".yaml"  
 
-        pass
+        full_path = f"{path}{self.file_id}_{file_type}"
+
+        with open(full_path, 'w') as f:
+            f.write(output_data.getvalue())
+
+
+def generate_unique_id(directory: str) -> int:
+    file_id = None
+    while True:
+        file_id: int = randint(1,1000000)
+        pattern = os.path.join(directory, f"{file_id}_*")
+        matching_files = glob.glob(pattern)
+        if len(matching_files) == 0:
+            return file_id

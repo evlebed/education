@@ -1,6 +1,8 @@
+import os
 from fastapi import APIRouter
 
-from app.core import DataGenerator
+from app.core import DataGenerator, JSONWriter, CSVWriter, YAMLWriter
+from app.models import FileGenerationRequest
 
 router = APIRouter(tags=["API для хранения файлов"])
 
@@ -22,12 +24,19 @@ API должно принимать json, по типу:
 (Подумать, как переисползовать код из задания 5)
 """
 @router.post("/generate_file", description="Задание_6. Конвертер")
-async def generate_file() -> int:
+async def generate_file(request_data: FileGenerationRequest) -> int:
     """Описание."""
 
-    data = DataGenerator()
-    data.generate()
-    data.to_file()
-    file_id: int = data.file_id
+    data_instance = DataGenerator()
+    data_instance.generate(request_data.matrix_size)
+    directory = os.path.dirname(__file__) + "/../files/"
+    writer = None
+    if request_data.file_type == "json":
+        writer = JSONWriter()
+    elif request_data.file_type == "csv":
+        writer = CSVWriter()
+    elif request_data.file_type == "yaml":
+        writer = YAMLWriter()
+    data_instance.to_file(path=directory, writer=writer)
 
-    return file_id
+    return data_instance.file_id

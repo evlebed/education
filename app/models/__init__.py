@@ -56,6 +56,22 @@ class BigJson(BaseModel):
     meta: Meta
 
 
+class FileGenerationRequest(BaseModel):
+    file_type: str
+    matrix_size: int 
+    
+    @validator('file_type')
+    def validate_file_type(cls, v):
+        if v not in ['json', 'csv', 'yaml']:
+            raise ValueError('Неправильный тип файла, разрешенные: "json", "csv", "yaml"')
+        return v
+   
+    @validator('matrix_size')
+    def validate_matrix_size(cls, v):
+        if v > 15 or v < 4:
+            raise ValueError('Размер матрицы должен быть от 4 до 15')
+        return v
+
 # class UserRequest(BaseModel):
 #     name: str
 #     message: str
